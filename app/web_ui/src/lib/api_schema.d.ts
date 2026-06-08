@@ -1942,6 +1942,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/projects/{project_id}/tasks/{task_id}/evals/{eval_id}/test_v2_eval": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Test V2 Eval Config */
+        post: operations["test_v2_eval_api_projects__project_id__tasks__task_id__evals__eval_id__test_v2_eval_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/projects/{project_id}/tasks/{task_id}/evals/{eval_id}/eval_config/{eval_config_id}/run_comparison": {
         parameters: {
             query?: never;
@@ -4368,11 +4385,11 @@ export interface components {
             };
             /**
              * Model Name
-             * @description The model to use for evaluation.
+             * @description The model to use for evaluation. Required for LLM-based eval types.
              */
-            model_name: string;
-            /** @description The provider of the evaluation model. */
-            provider: components["schemas"]["ModelProviderName"];
+            model_name?: string | null;
+            /** @description The provider of the evaluation model. Required for LLM-based eval types. */
+            provider?: components["schemas"]["ModelProviderName"] | null;
         };
         /**
          * CreateEvaluatorRequest
@@ -5944,6 +5961,38 @@ export interface components {
             eval_config: components["schemas"]["EvalConfig"];
             /** @description The run config used. */
             run_config: components["schemas"]["TaskRunConfig"];
+        };
+        /**
+         * EvalTaskInput
+         * @description The runtime data bundle passed to V2 evaluators.
+         *
+         *     Assembled by the eval runner from an EvalInput and a task run result.
+         */
+        EvalTaskInput: {
+            /**
+             * Final Message
+             * @description The final model output (task output text).
+             */
+            final_message: string;
+            /**
+             * Trace
+             * @description The full conversation trace, if available.
+             */
+            trace?: {
+                [key: string]: unknown;
+            }[] | null;
+            /**
+             * Reference Data
+             * @description Reference/ground-truth data from EvalInput.reference.
+             */
+            reference_data?: {
+                [key: string]: components["schemas"]["JsonValue"];
+            } | null;
+            /**
+             * Task Input
+             * @description The original task input text.
+             */
+            task_input?: string | null;
         };
         /**
          * EvalTemplateId
@@ -10341,6 +10390,33 @@ export interface components {
              * @description Auth method that succeeded: 'system_keys', 'pat_token', or 'github_oauth'. Null on failure.
              */
             auth_method?: string | null;
+        };
+        /**
+         * TestV2EvalRequest
+         * @description Request to test-run a V2 eval config without persisting.
+         */
+        TestV2EvalRequest: {
+            /**
+             * Properties
+             * @description The V2 eval config properties to test.
+             */
+            properties: components["schemas"]["LlmJudgeProperties"] | components["schemas"]["ExactMatchProperties"] | components["schemas"]["PatternMatchProperties"] | components["schemas"]["SetCheckProperties"] | components["schemas"]["ToolCallCheckProperties"] | components["schemas"]["ContainsProperties"] | components["schemas"]["StepCountCheckProperties"] | components["schemas"]["CodeEvalProperties"];
+            /** @description The input to evaluate. */
+            eval_input: components["schemas"]["EvalTaskInput"];
+        };
+        /**
+         * TestV2EvalResponse
+         * @description Response from a test-run of a V2 eval.
+         */
+        TestV2EvalResponse: {
+            /** Scores */
+            scores?: {
+                [key: string]: number;
+            };
+            /** Skipped Reason */
+            skipped_reason?: string | null;
+            /** Skipped Detail */
+            skipped_detail?: string | null;
         };
         /**
          * TestWriteAccessRequest
@@ -15559,6 +15635,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EvalConfig"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    test_v2_eval_api_projects__project_id__tasks__task_id__evals__eval_id__test_v2_eval_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The unique identifier of the project. */
+                project_id: string;
+                /** @description The unique identifier of the task within the project. */
+                task_id: string;
+                /** @description The unique identifier of the eval. */
+                eval_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TestV2EvalRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestV2EvalResponse"];
                 };
             };
             /** @description Validation Error */
